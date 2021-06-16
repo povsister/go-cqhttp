@@ -6,10 +6,11 @@ import (
 	_ "embed" // embed the default config file
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 
+	"github.com/Mrs4s/MiraiGo/client"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -20,17 +21,34 @@ var defaultConfig string
 
 var currentPath = getCurrentPath()
 
-// DefaultConfigFile 默认配置文件路径
-var DefaultConfigFile = path.Join(currentPath, "config.yml")
+var (
+	// DefaultConfigFile 默认配置文件路径
+	DefaultConfigFile = filepath.Join(currentPath, "config.yml")
+	// The default device json path
+	DefaultDeviceJsonFile = filepath.Join(currentPath, "device.json")
+	// The default server address config file path
+	DefaultServerAddressFile = filepath.Join(currentPath, "address.txt")
+	//  The default session file path
+	DefaultSessionFile = filepath.Join(currentPath, "session.token")
+	// allowed online status
+	AllowedOnlineStatus = [...]client.UserOnlineStatus{
+		client.StatusOnline, client.StatusAway, client.StatusInvisible, client.StatusBusy,
+		client.StatusListening, client.StatusConstellation, client.StatusWeather, client.StatusMeetSpring,
+		client.StatusTimi, client.StatusEatChicken, client.StatusLoving, client.StatusWangWang, client.StatusCookedRice,
+		client.StatusStudy, client.StatusStayUp, client.StatusPlayBall, client.StatusSignal, client.StatusStudyOnline,
+		client.StatusGaming, client.StatusVacationing, client.StatusWatchingTV, client.StatusFitness,
+	}
+)
 
 // Config 总配置文件
 type Config struct {
 	Account struct {
-		Uin      int64  `yaml:"uin"`
-		Password string `yaml:"password"`
-		Encrypt  bool   `yaml:"encrypt"`
-		Status   int32  `yaml:"status"`
-		ReLogin  struct {
+		Uin               int64  `yaml:"uin"`
+		Password          string `yaml:"password"`
+		PasswordEncrypted string `yaml:"password-encrypted"`
+		Encrypt           bool   `yaml:"encrypt"`
+		Status            int32  `yaml:"status"`
+		ReLogin           struct {
 			Disabled bool `yaml:"disabled"`
 			Delay    uint `yaml:"delay"`
 			MaxTimes uint `yaml:"max-times"`
