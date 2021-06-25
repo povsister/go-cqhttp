@@ -3,9 +3,11 @@ package mirai
 import (
 	"crypto/md5"
 	"errors"
+	"fmt"
+	"os"
 
-	"github.com/Mrs4s/go-cqhttp/global"
-	"github.com/Mrs4s/go-cqhttp/global/config"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/term"
 )
 
 var (
@@ -19,31 +21,20 @@ func (c *Core) Login() error {
 
 // read/write/encrypt password
 func (c *Core) prepareCredential() error {
-	// 如果不存在session 且 账号未设置或者密码未设置
-	// 就当作没credential处理
-	if !global.PathExists(config.DefaultSessionFile) &&
-		(c.cfg.Account.Uin == 0 ||
-			((len(c.cfg.Account.Password) == 0 && !c.cfg.Account.Encrypt) &&
-				(len(c.cfg.Account.PasswordEncrypted) == 0) && c.cfg.Account.Encrypt)) {
+	if c.cfg.Account.Uin == 0 ||
+		(len(c.cfg.Account.Password) == 0 && len(c.cfg.Account.PasswordEncrypted) == 0) {
 		return errNoCredential
 	}
 
-	if global.PathExists(config.DefaultSessionFile) {
-
-	}
-
-	if len(c.cfg.Account.Password) > 0 {
-		c.pwHash = md5.Sum([]byte(c.cfg.Account.Password))
-	}
-	// 有密码 不加密
-	if !c.cfg.Account.Encrypt && len(c.cfg.Account.Password) > 0 {
-		return nil
-	}
-	// 有密码 启用加密
+	// encrypt password
 	if c.cfg.Account.Encrypt && len(c.cfg.Account.Password) > 0 {
-		// TODO: encrypt pw and remove it from config file
+		c.pwHash = md5.Sum([]byte(c.cfg.Account.Password))
+		log.Infof("密码加密已启用, 请输入Key对密码进行加密: (Enter 提交)")
+		byteKey, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return fmt.Errorf("can not read input password: %v", err)
+		}
 	}
 
-	// should never reach here
-	return errNoCredential
+	return nil
 }
